@@ -12,9 +12,9 @@ import webserver
 
 
 #yt_dl
+cookies_path = 'cookies.txt'
 yt_dl_options = {"format" : "bestaudio/best",
-                 "cookies": "DiscordBot/cookies.txt",
-                 "cookies-from-browser": "opera"
+                 'cookies': cookies_path,
                 }
 ytdl = yt_dlp.YoutubeDL(yt_dl_options)
 ffmpeg_options = {'options' : '-vn'}
