@@ -12,7 +12,9 @@ import webserver
 
 
 #yt_dl
-yt_dl_options = {"format" : "bestaudio/best"}
+yt_dl_options = {"format" : "bestaudio/best",
+                 "cookies": "cookies.txt"
+                }
 ytdl = yt_dlp.YoutubeDL(yt_dl_options)
 ffmpeg_options = {'options' : '-vn'}
 
