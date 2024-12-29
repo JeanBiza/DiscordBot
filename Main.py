@@ -11,10 +11,8 @@ import tempfile
 import webserver
 
 
-#yt_dl
-cookies_path = 'cookies.txt'
-yt_dl_options = {"format" : "bestaudio/best",
-                 'cookies': cookies_path,
+#yt_dl
+yt_dl_options = {"format" : "bestaudio/best",
                 }
 ytdl = yt_dlp.YoutubeDL(yt_dl_options)
 ffmpeg_options = {'options' : '-vn'}
