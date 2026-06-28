@@ -8,12 +8,14 @@ import random
 import os
 import tempfile
 import webserver
+import shutil
 from dotenv import load_dotenv
+import database
 
 load_dotenv()
 token = os.getenv("DISCORD_TOKEN")
 
-import database
+
 
 #yt_dl
 yt_dl_options = {"format" : "bestaudio/best"}
@@ -25,13 +27,27 @@ intents.message_content = True
 intents.members = True
 prefix = "$"
 client = commands.Bot(command_prefix=prefix,intents=intents, help_command=None)
-voice_client = None
 
 
 @client.event
 async def on_ready():
     database.init_db()
+    if not shutil.which("ffmpeg"):
+        print("WARNING: ffmpeg no encontrado. Los comandos de voz no funcionarán.")
     print(f'We have logged in as {client.user}')
+
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.reply(f"Comando no encontrado. Usa `{client.command_prefix}help` para ver los comandos disponibles.")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.reply(f"Faltan argumentos. Usa `{client.command_prefix}help` para más información.")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.reply("No tienes permisos para usar este comando.")
+    elif isinstance(error, commands.BadArgument):
+        await ctx.reply("Argumento inválido. Revisa el comando e intenta de nuevo.")
+    else:
+        print(f"Error no manejado: {error}")
 
 @client.command()
 async def help(ctx, categoria:str = None):
@@ -160,32 +176,25 @@ async def leave(ctx):
 #comando para tts
 @client.command()
 async def tts(ctx, *, text: str):
-    global voice_client
-
-    if voice_client and voice_client.is_connected():
-        if voice_client.channel != ctx.author.voice.channel:
-            await ctx.send(f"El bot ya está en el canal de voz {voice_client.channel.name}. No puede cambiar de canal.")
-            return
-
-    if ctx.author.voice:
-        channel = ctx.author.voice.channel
-        
-        if voice_client is None or not voice_client.is_connected():
-            voice_client = await channel.connect()
-        
-        tts = gTTS(text=text, lang='es')
-
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmpfile:
-            tts.save(tmpfile.name)
-
-        voice_client.play(discord.FFmpegPCMAudio(tmpfile.name), after=lambda e: print('Reproducción finalizada'))
-
-        while voice_client.is_playing():
-            await asyncio.sleep(1)
-
-        os.remove(tmpfile.name)
-    else:
+    if not ctx.author.voice:
         await ctx.send("Debes estar en un canal de voz para usar el comando TTS.")
+        return
+
+    voice = ctx.guild.voice_client
+    channel = ctx.author.voice.channel
+
+    if voice is None:
+        voice = await channel.connect()
+    elif voice.channel != channel:
+        await ctx.send(f"El bot ya está en {voice.channel.name}.")
+        return
+
+    tts = gTTS(text=text, lang='es')
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmpfile:
+        tts.save(tmpfile.name)
+
+    voice.play(discord.FFmpegPCMAudio(tmpfile.name), after=lambda e: os.remove(tmpfile.name))
+    await ctx.reply("Enviando mensaje de voz...")
 
 
 #Comando para reproducir una cancion
@@ -195,7 +204,7 @@ async def play(ctx, url:str):
         loop = asyncio.get_event_loop()
         data = await loop.run_in_executor(None, lambda : ytdl.extract_info(url, download=False))
         song = data['url']
-        player = discord.FFmpegPCMAudio(song, executable='C:/ffmpeg/ffmpeg.exe', **ffmpeg_options)
+        player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
         voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
         voice.play(player)
         await ctx.reply("Reproduciendo . .")

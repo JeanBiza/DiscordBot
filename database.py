@@ -21,7 +21,7 @@ def set_welcome_channel(guild_id: int, channel_id: int):
         INSERT INTO guild_config (guild_id, welcome_channel_id)
         VALUES (?, ?)
         ON CONFLICT(guild_id) DO UPDATE SET welcome_channel_id = excluded.welcome_channel_id
-    """)
+    """, (guild_id, channel_id))
     conn.commit()
     conn.close()
 
