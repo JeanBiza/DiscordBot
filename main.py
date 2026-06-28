@@ -5,12 +5,10 @@ from gtts import gTTS
 import yt_dlp
 import asyncio
 import random
-import yaml
 import os
 import tempfile
 import webserver
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 token = os.getenv("DISCORD_TOKEN")
@@ -32,7 +30,7 @@ voice_client = None
 async def on_ready():
     print(f'We have logged in as {client.user}')
 
-@client.command(pass_context = True)
+@client.command()
 async def help(ctx, categoria:str = None):
     categorias = ["voz", "configuracion", "interaccion", "entretencion"]
     prefix = client.command_prefix
@@ -120,7 +118,7 @@ async def help(ctx, categoria:str = None):
 
 
 #Comando para saludar
-@client.command(pass_context = True)
+@client.command()
 async def hi(ctx, usuario: discord.User = None):
     if usuario is None:
         await ctx.reply("Hola!")
@@ -128,7 +126,7 @@ async def hi(ctx, usuario: discord.User = None):
         await ctx.send(f'Hola {usuario.mention}!')
 
 #Comando para cambiar el prefijo
-@client.command(pass_context = True)
+@client.command()
 async def prefix(ctx, prefix:str):
     if len(prefix) == 1:
         client.command_prefix = prefix
@@ -137,7 +135,7 @@ async def prefix(ctx, prefix:str):
         await ctx.reply(f'Usa solo un caracter para el prefijo (Si es posible un simbolo, para no interrumpir con chat)')
 
 #Comando para entrar a un canal de voz
-@client.command(pass_context = True)
+@client.command()
 async def join(ctx):
     if (ctx.author.voice):
         channel = ctx.message.author.voice.channel
@@ -148,7 +146,7 @@ async def join(ctx):
 
 
 #Cmando para salir de un canal de voz
-@client.command(pass_context = True)
+@client.command()
 async def leave(ctx):
     if (ctx.voice_client):
         await ctx.guild.voice_client.disconnect()
@@ -157,7 +155,7 @@ async def leave(ctx):
         await ctx.reply("No estoy en ningun canal.")
 
 #comando para tts
-@client.command(pass_context = True)
+@client.command()
 async def tts(ctx, *, text: str):
     global voice_client
 
@@ -188,7 +186,7 @@ async def tts(ctx, *, text: str):
 
 
 #Comando para reproducir una cancion
-@client.command(pass_context = True)
+@client.command()
 async def play(ctx, url:str):
     try:
         loop = asyncio.get_event_loop()
@@ -202,7 +200,7 @@ async def play(ctx, url:str):
         print(e)
 
 #Comando para pausar musica
-@client.command(pass_context = True)
+@client.command()
 async def pause(ctx):
     voz = get(client.voice_clients,guild=ctx.guild)
     if voz and voz.is_playing():
@@ -213,7 +211,7 @@ async def pause(ctx):
         await ctx.reply("No se esta reproduciendo nada para pausar.")
 
 #comando para continuar musica
-@client.command(pass_context = True)
+@client.command()
 async def resume(ctx):
     voz = get(client.voice_clients,guild=ctx.guild)
     if voz and voz.is_paused():
@@ -224,7 +222,7 @@ async def resume(ctx):
         await ctx.reply("No hay nada pausado.")
 
 #comando para detener musica
-@client.command(pass_context = True)
+@client.command()
 async def stop(ctx):
     voz = get(client.voice_clients,guild=ctx.guild)
     if voz and voz.is_playing():
@@ -235,14 +233,14 @@ async def stop(ctx):
         await ctx.reply("No hay nada que detener.")
 
 #Comando para tirar el dado
-@client.command(pass_context = True)
+@client.command()
 async def dice(ctx):
     numero = random.randint(1,6)
     await ctx.reply("Girando el dado . . .")
     await ctx.send(f'Ha salido el numero: {numero}.')
 
 #comando para piedra, papel o tijeras
-@client.command(pass_context = True)
+@client.command()
 async def rps(ctx, eleccion:str):
     ppt = ["piedra","papel","tijeras"]
     if eleccion in ppt:
@@ -276,7 +274,7 @@ async def rps(ctx, eleccion:str):
 
 
 #comando para enviar avatar de usuario
-@client.command(pass_context = True)
+@client.command()
 async def avatar(ctx, usuario: discord.User = None):
     if usuario is None:
         usuario = ctx.author
