@@ -5,6 +5,7 @@ import yt_dlp
 import asyncio
 import os
 import tempfile
+from cogs.ui import MusicControls
 
 yt_dl_options = {"format": "bestaudio/best"}
 ytdl = yt_dlp.YoutubeDL(yt_dl_options)
@@ -40,7 +41,8 @@ class Music(commands.Cog):
                 asyncio.run_coroutine_threadsafe(self.play_next(ctx), self.client.loop)
 
             voice.play(player, after=after_play)
-            await ctx.send(f"Reproduciendo: **{title}**")
+            embed = discord.Embed(title="🎵 Reproduciendo", description=f"**{title}**", color=0xff8c00)
+            await ctx.send(embed=embed, view=MusicControls(ctx))
         except Exception as e:
             print(e)
             await ctx.send("Error al reproducir la canción.")
