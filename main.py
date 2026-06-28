@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 token = os.getenv("DISCORD_TOKEN")
 
+import database
+
 #yt_dl
 yt_dl_options = {"format" : "bestaudio/best"}
 ytdl = yt_dlp.YoutubeDL(yt_dl_options)
@@ -28,6 +30,7 @@ voice_client = None
 
 @client.event
 async def on_ready():
+    database.init_db()
     print(f'We have logged in as {client.user}')
 
 @client.command()
@@ -282,14 +285,22 @@ async def avatar(ctx, usuario: discord.User = None):
     await ctx.reply(f'Avatar del usuario {usuario.mention}:')
     await ctx.send(f'{usuario.avatar.url}')
 
+#Comando para definir canal de bienvenida
+@client.command()
+@commands.has_permissions(administrator=True)
+async def setwelcome(ctx, canal: discord.TextChannel):
+    database.set_welcome_channel(ctx.guild.id, canal.id)
+    await ctx.reply(f'Canal de bienvenida configurado en {canal.mention}')
 
 #Evento de bienvenida al usuario
 @client.event
 async def on_member_join(member):
-    id_canal = 1322320350155112448
-    canal = await member.guild.fetch_channel(id_canal)
-    await canal.send(f'Bienvenid@ al servidor, humano estupido! {member.mention}')
-
+    channel_id = database.get_welcome_channel(member.guild.id)
+    if channel_id is None:
+        return
+    canal = member.guild.get_channel(channel_id)
+    if canal:
+        await canal.send(f'Bienvenid@ al servidor! {member.mention}')
 
 
 
