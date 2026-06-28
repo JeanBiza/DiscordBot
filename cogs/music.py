@@ -81,7 +81,7 @@ class Music(commands.Cog):
         await ctx.reply("Enviando mensaje de voz...")
 
     @commands.command()
-    async def play(self, ctx, url: str):
+    async def play(self, ctx, *, query: str):
         if not ctx.author.voice:
             await ctx.reply("Debes estar en un canal de voz.")
             return
@@ -92,9 +92,17 @@ class Music(commands.Cog):
 
         queue = self.get_queue(ctx.guild.id)
 
+        if not query.startswith("http"):
+            query = f"ytsearch:{query}"
+
         loop = asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
-        title = data.get('title', url)
+        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(query, download=False))
+        
+        if 'entries' in data:
+            data = data['entries'][0]
+        
+        title = data.get('title', query)
+        url = data['webpage_url']
 
         if voice.is_playing() or voice.is_paused():
             await queue.put((url, title))
