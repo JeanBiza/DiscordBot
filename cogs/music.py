@@ -13,6 +13,37 @@ ffmpeg_options = {'options': '-vn'}
 class Music(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.queues = {}
+
+    def get_queue(self, guild_id):
+        if guild_id not in self.queues:
+            self.queues[guild_id] = asyncio.Queue()
+        return self.queues[guild_id]
+
+    async def play_next(self, ctx):
+        queue = self.get_queue(ctx.guild.id)
+        if queue.empty():
+            return
+        url, title = await queue.get()
+        await self._play_url(ctx, url)
+
+    async def _play_url(self, ctx, url):
+        try:
+            loop = asyncio.get_event_loop()
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+            song = data['url']
+            title = data.get('title', url)
+            player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
+            voice = ctx.guild.voice_client
+
+            def after_play(e):
+                asyncio.run_coroutine_threadsafe(self.play_next(ctx), self.client.loop)
+
+            voice.play(player, after=after_play)
+            await ctx.send(f"Reproduciendo: **{title}**")
+        except Exception as e:
+            print(e)
+            await ctx.send("Error al reproducir la canción.")
 
     @commands.command()
     async def join(self, ctx):
@@ -51,16 +82,25 @@ class Music(commands.Cog):
 
     @commands.command()
     async def play(self, ctx, url: str):
-        try:
-            loop = asyncio.get_event_loop()
-            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
-            song = data['url']
-            player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
+        if not ctx.author.voice:
+            await ctx.reply("Debes estar en un canal de voz.")
+            return
+        voice = ctx.guild.voice_client
+        if voice is None:
+            await ctx.author.voice.channel.connect()
             voice = ctx.guild.voice_client
-            voice.play(player)
-            await ctx.reply("Reproduciendo . .")
-        except Exception as e:
-            print(e)
+
+        queue = self.get_queue(ctx.guild.id)
+
+        loop = asyncio.get_event_loop()
+        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+        title = data.get('title', url)
+
+        if voice.is_playing() or voice.is_paused():
+            await queue.put((url, title))
+            await ctx.reply(f"Agregado a la cola: **{title}**")
+        else:
+            await self._play_url(ctx, url)
 
     @commands.command()
     async def pause(self, ctx):
@@ -84,10 +124,30 @@ class Music(commands.Cog):
     async def stop(self, ctx):
         voice = ctx.guild.voice_client
         if voice and voice.is_playing():
+            self.queues.pop(ctx.guild.id, None)
             voice.stop()
-            await ctx.reply("Cancion detenida correctamente.")
+            await ctx.reply("Cancion detenida y cola limpiada.")
         else:
             await ctx.reply("No hay nada que detener.")
+
+    @commands.command()
+    async def skip(self, ctx):
+        voice = ctx.guild.voice_client
+        if voice and voice.is_playing():
+            voice.stop()
+            await ctx.reply("Canción saltada.")
+        else:
+            await ctx.reply("No hay nada reproduciéndose.")
+
+    @commands.command()
+    async def queue(self, ctx):
+        q = self.get_queue(ctx.guild.id)
+        items = list(q._queue)
+        if not items:
+            await ctx.reply("La cola está vacía.")
+        else:
+            lista = "\n".join(f"{i+1}. **{title}**" for i, (url, title) in enumerate(items))
+            await ctx.reply(f"**Cola:**\n{lista}")
 
 async def setup(client):
     await client.add_cog(Music(client))
