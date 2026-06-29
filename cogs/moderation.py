@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import datetime
 
 class Moderation(commands.Cog):
     def __init__(self, client):
@@ -37,6 +38,19 @@ class Moderation(commands.Cog):
         lista = "\n".join(f"- **{entry.user}** (ID: `{entry.user.id}`)" for entry in bans)
         embed = discord.Embed(title="Lista de bans", description=lista, color=discord.Color.red())
         await ctx.reply(embed=embed, ephemeral=True)
+
+    @commands.command()
+    @commands.has_permissions(moderate_members=True)
+    async def mute(self, ctx, usuario: discord.Member, minutos: int = 10, *, razon: str = "Sin razón especificada"):
+        duracion = datetime.timedelta(minutes=minutos)
+        await usuario.timeout(duracion, reason=razon)
+        await ctx.reply(f"**{usuario}** ha sido silenciado por {minutos} minutos. Razón: {razon}")
+
+    @commands.command()
+    @commands.has_permissions(moderate_members=True)
+    async def unmute(self, ctx, usuario: discord.Member):
+        await usuario.timeout(None)
+        await ctx.reply(f"**{usuario}** ha sido desilenciado.")
 
 async def setup(client):
     await client.add_cog(Moderation(client))
