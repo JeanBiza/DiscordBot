@@ -19,6 +19,7 @@ async def on_ready():
     await client.load_extension("cogs.fun")
     await client.load_extension("cogs.config")
     await client.load_extension("cogs.music")
+    await client.load_extension("cogs.moderation")
     if not shutil.which("ffmpeg"):
         print("WARNING: ffmpeg no encontrado. Los comandos de voz no funcionarán.")
     print(f'We have logged in as {client.user}')
