@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import datetime
 import asyncio
+import database
 
 class Moderation(commands.Cog):
     def __init__(self, client):
@@ -64,6 +65,37 @@ class Moderation(commands.Cog):
         msg = await ctx.send(f"Se eliminaron **{len(borrados)}** mensajes.")
         await asyncio.sleep(3)
         await msg.delete()
+    
+    @commands.command()
+    @commands.has_permissions(moderate_members=True)
+    async def warn(self, ctx, usuario: discord.Member, *, razon: str = "Sin razón especificada"):
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        database.add_warning(ctx.guild.id, usuario.id, ctx.author.id, razon, timestamp)
+        await ctx.reply(f"**{usuario}** ha recibido una advertencia. Razón: {razon}")
+
+    @commands.command()
+    @commands.has_permissions(moderate_members=True)
+    async def warnings(self, ctx, usuario: discord.Member):
+        rows = database.get_warnings(ctx.guild.id, usuario.id)
+        if not rows:
+            await ctx.reply(f"**{usuario}** no tiene advertencias.")
+            return
+        lista = "\n".join(
+            f"- {ts} | Mod: <@{mod_id}> | Razón: {reason}"
+            for mod_id, reason, ts in rows
+        )
+        embed = discord.Embed(
+            title=f"Advertencias de {usuario}",
+            description=lista,
+            color=discord.Color.orange()
+        )
+        await ctx.reply(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(moderate_members=True)
+    async def clearwarns(self, ctx, usuario: discord.Member):
+        database.clear_warnings(ctx.guild.id, usuario.id)
+        await ctx.reply(f"Se eliminaron todas las advertencias de **{usuario}**.")
 
 async def setup(client):
     await client.add_cog(Moderation(client))

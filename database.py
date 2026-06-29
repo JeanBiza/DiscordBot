@@ -11,6 +11,45 @@ def init_db():
             welcome_channel_id INTEGER
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS warnings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER,
+            user_id INTEGER,
+            moderator_id INTEGER,
+            reason TEXT,
+            timestamp TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def add_warning(guild_id: int, user_id: int, moderator_id: int, reason: str, timestamp: str):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO warnings (guild_id, user_id, moderator_id, reason, timestamp)
+        VALUES (?, ?, ?, ?, ?)
+    """, (guild_id, user_id, moderator_id, reason, timestamp))
+    conn.commit()
+    conn.close()
+
+def get_warnings(guild_id: int, user_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT moderator_id, reason, timestamp FROM warnings
+        WHERE guild_id = ? AND user_id = ?
+        ORDER BY timestamp DESC
+    """, (guild_id, user_id))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+def clear_warnings(guild_id: int, user_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM warnings WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
     conn.commit()
     conn.close()
 
