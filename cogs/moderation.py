@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import datetime
+import asyncio
 
 class Moderation(commands.Cog):
     def __init__(self, client):
@@ -51,6 +52,18 @@ class Moderation(commands.Cog):
     async def unmute(self, ctx, usuario: discord.Member):
         await usuario.timeout(None)
         await ctx.reply(f"**{usuario}** ha sido desilenciado.")
+
+    @commands.command()
+    @commands.has_permissions(manage_messages=True)
+    async def purge(self, ctx, cantidad: int):
+        if cantidad <= 0:
+            await ctx.reply("Ingresa un número mayor a 0.")
+            return
+        await ctx.message.delete()
+        borrados = await ctx.channel.purge(limit=cantidad)
+        msg = await ctx.send(f"Se eliminaron **{len(borrados)}** mensajes.")
+        await asyncio.sleep(3)
+        await msg.delete()
 
 async def setup(client):
     await client.add_cog(Moderation(client))
