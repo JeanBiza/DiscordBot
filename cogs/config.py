@@ -7,91 +7,56 @@ class Config(commands.Cog):
         self.client = client
 
     @commands.command()
-    async def help(self, ctx, categoria:str = None):
-        categorias = ["voz", "configuracion", "interaccion", "entretencion"]
+    async def help(self, ctx):
         prefix = self.client.command_prefix
 
-        embed_principal = discord.Embed(
-            title=" Comandos ",
-            description="Estos son los comandos disponibles del bot"
+        embed = discord.Embed(
+            title="Comandos del bot",
+            description=f"Prefijo actual: `{prefix}`",
+            color=discord.Color.blurple()
         )
-        embed_principal.add_field(name="", value="", inline=False)
-        embed_principal.add_field(name="Prefijo del servidor", value=prefix, inline=False)
-        embed_principal.add_field(name="", value="", inline=False)
 
-
-        embed_voz = discord.Embed(
-            title="Categoria : Voz",
-            description="Comandos para el chat de voz"
+        embed.add_field(
+            name="Música/Voz",
+            value=(
+                f"`{prefix}join` `{prefix}leave` `{prefix}play <url/búsqueda>`\n"
+                f"`{prefix}pause` `{prefix}resume` `{prefix}stop`\n"
+                f"`{prefix}skip` `{prefix}queue` `{prefix}tts <texto>`"
+            ),
+            inline=False
         )
-        embed_voz.add_field(name="", value="", inline=False)
-        embed_voz.add_field(name="join", value="Entrar a un canal de voz", inline=True)
-        embed_voz.add_field(name="leave", value="Salir de un canal de voz", inline=True)
-        embed_voz.add_field(name="tts", value="Envia un mensaje por voz", inline=True)
-        embed_voz.add_field(name="play", value="Reproduce una canción (URL de YouTube)", inline=True)
-        embed_voz.add_field(name="pause", value="Pausa la canción actual", inline=True)
-        embed_voz.add_field(name="resume", value="Reanuda la canción actual", inline=True)
-        embed_voz.add_field(name="stop", value="Detiene la música actual", inline=True)
-        embed_voz.add_field(name="", value="", inline=False)
 
-
-        embed_configuracion = discord.Embed(
-            title="Categoria : Configuracion",
-            description="Comandos de configuracion del servidor"
+        embed.add_field(
+            name="Entretenimiento",
+            value=f"`{prefix}rps <piedra/papel/tijeras>` `{prefix}dice`",
+            inline=False
         )
-        embed_configuracion.add_field(name="", value="", inline=False)
-        embed_configuracion.add_field(name="help", value="Muestra todos los comandos", inline=True)
-        embed_configuracion.add_field(name="prefix", value="Cambia el prefijo de los comandos", inline=True)
-        embed_configuracion.add_field(name="", value="", inline=False)
-        
 
-        embed_interaccion = discord.Embed(
-            title="Categoria : Configuracion",
-            description="Comandos de interaccion"
+        embed.add_field(
+            name="Interacción",
+            value=f"`{prefix}hi` `{prefix}avatar [@usuario]`",
+            inline=False
         )
-        embed_interaccion.add_field(name="", value="", inline=False)
-        embed_interaccion.add_field(name="hi", value="Quieres un saludo?", inline=True)
-        embed_interaccion.add_field(name="avatar", value="Mira el avatar de algun usuario", inline=True)
-        embed_interaccion.add_field(name="", value="", inline=False)
 
+        embed.add_field(
+            name="Configuración",
+            value=f"`{prefix}prefix <símbolo>` `{prefix}setwelcome #canal`",
+            inline=False
+        )
 
-        embed_entretencion = discord.Embed(
-            title="Categoria : Entretencion",
-            description="Comandos de Entretenimiento"
-        ) 
-        embed_entretencion.add_field(name="", value="", inline=False)
-        embed_entretencion.add_field(name="rps", value="Piedra, Papel o Tijera", inline=True)
-        embed_entretencion.add_field(name="dice", value="Tira el dado", inline=True)
-        embed_entretencion.add_field(name="", value="", inline=False)
+        embed.add_field(
+            name="Moderación",
+            value=(
+                f"`{prefix}kick @usuario` `{prefix}ban @usuario` `{prefix}unban <id>` `{prefix}banlist`\n"
+                f"`{prefix}mute @usuario [min]` `{prefix}unmute @usuario` `{prefix}purge <n>`\n"
+                f"`{prefix}warn @usuario` `{prefix}warnings @usuario` `{prefix}clearwarns @usuario`"
+            ),
+            inline=False
+        )
 
-        if categoria is None:
-                await ctx.send(embed=embed_principal)
-                await ctx.send(embed=embed_configuracion)
-                await ctx.send(embed=embed_interaccion)
-                await ctx.send(embed=embed_voz)
-                await ctx.send(embed=embed_entretencion)
-        else:
-            if any(categoria.lower().startswith(c) for c in categorias):
-                
-                if categoria.lower().startswith("config"):
-                    await ctx.send(embed=embed_principal)
-                    await ctx.send(embed=embed_configuracion)
+        embed.set_footer(text="Usa los comandos con el prefijo correspondiente")
 
-                if categoria.lower().startswith("inter"):
-                    await ctx.send(embed=embed_principal)
-                    await ctx.send(embed=embed_interaccion)
-
-                if categoria.lower().startswith("vo"):
-                    await ctx.send(embed=embed_principal)
-                    await ctx.send(embed=embed_voz)
-
-                if categoria.lower().startswith("entre"):
-                    await ctx.send(embed=embed_principal)
-                    await ctx.send(embed=embed_entretencion)
-
-            else:
-                await ctx.reply("Ingrese una categoría válida: voz, configuracion, interaccion, entretencion.")
-
+        await ctx.send(embed=embed)
 
     #Comando para cambiar el prefijo
     @commands.command()
